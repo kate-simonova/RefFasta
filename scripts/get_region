@@ -1,0 +1,87 @@
+#!/usr/bin/python3
+
+# this script is used to get a subset (region) of DNA from a DNA sequence in FASTA format
+
+# importing necessary modules
+import sys
+from string import printable
+import threading
+
+# variables used in script
+seq_list = []
+output_file_name = ''
+IUB_nucleotide_code = ['A', 'T', 'C', 'G', 'R', 'Y', 'K', 'M', 'S', 'W', 'B', 'D', 'H', 'V', 'N',
+                       'a', 't', 'c', 'g', 'r', 'y', 'k', 'm', 's', 'w', 'b', 'd', 'h', 'v', 'n']
+
+# Checking if integer was set as a start and the end sequence
+try:
+    start = int(sys.argv[1])
+except ValueError:
+    print()
+    print("ERROR: the integer should be set as the first argument (example 23,12 etc.)")
+    print()
+    sys.exit()
+
+try:
+    end = int(sys.argv[2])
+except ValueError:
+    print()
+    print("ERROR: the integer should be set as the first argument (example 23,12 etc.)")
+    print()
+    sys.exit()
+
+if start >= end:
+    print()
+    print("ERROR: the smaller integer should be set as the first integer argument (example: refFasta get_region 333 666 <input_file>; 333 < 666)")
+    print()
+    sys.exit()
+
+input = sys.stdin
+
+data = sys.stdin.readlines()
+
+
+# functions used in script
+def reformatseq(seq_line):
+    seq_line = ''.join(i.upper() for x in seq_line.split() for i in x if i in IUB_nucleotide_code)
+    seq_list.append(''.join(seq_line))
+    return seq_list
+
+
+def return_printable_symbols_cds(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    cds = text[start-1:end]
+    seq_list = [cds[i:i + 60] for i in range(0, len(cds), 60)]
+    return seq_list
+
+
+def parse_file(input):
+    global output_file_name
+    global sequence
+    for line in input:
+        if line.startswith('>'):  # it is a header
+            output_file_name = line.strip()
+        else:
+            sequence = reformatseq(line)
+    sequence = return_printable_symbols_cds(sequence)
+    output_file_name = 'your fasta sequence'
+    if output_file_name == '':
+        output_file_name = ''.join(sys.argv[1].split('.')[:-1])  # we take the header from file name
+
+
+# the main code
+if not data:
+    with open(sys.argv[3], 'r') as file:  # this line is used for a script as python3 myscript.py file.txt
+        parse_file(file)
+else:
+    parse_file(data)
+
+# writing to a file
+with open('{}_cds.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'w') as f:
+    print('>' + output_file_name + ' cds region {}-{}'.format(start, end), file=f)
+    for i in sequence:
+        print(i, file=f)
+
+# printing sequence to the terminal
+with open('{}_cds.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'r') as seq_file:
+    print(seq_file.read())

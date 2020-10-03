@@ -1,0 +1,161 @@
+#!/bin/bash
+
+# This is the main script for RefFasta toolkit, it is running all other scripts
+
+# this is an introductory function
+function usage()
+{
+  echo ""
+  echo "RefFasta is a toolkit for processing files into FASTA format"
+  echo ""
+  echo "Usage: refFasta <command> <input> or cat <input> | refFasta <command> "
+  echo "Example: refFasta reformatDNA my_sequence.txt or cat my_sequence.txt | refFasta reformatDNA"
+  echo "Version: 0.1"
+  echo "Contact: Ekaterina Simonova <simonove@vscht.cz>"
+  echo ""
+  echo "Options:"
+  echo -e "\t-h|--help \t\tprint detailed description of tool and its options"
+  echo ""
+  echo -e "Commands:"
+  echo -e "\treformatAA \t\t to reformate an amino acid sequence into FASTA format"
+  echo -e "\treformatDNA \t\t to reformate an DNA sequence into FASTA format"
+  echo -e "\tstatisticAA \t\t to get the basic statistics about the amino acid sequence"
+  echo -e "\tstatisticDNA \t\t to get the basic statistics about DNA sequence"
+  echo -e "\treverse_complement \t to create reverse complement strand of your DNA sequence"
+  echo -e "\tget_region \t\t to subsample a defined range from a DNA sequence"
+  echo -e "\ttranslate \t\t to translate your DNA sequence into protein"
+  echo ""
+}
+
+if [ "$#" -eq 0 ] # checking the number of arguments
+then
+  echo "ERROR: Options were not set"
+  usage
+  exit 1
+fi
+
+if [ "$#" -eq 2 ] # checking the number of arguments
+then
+  if [ ! -f $2 ] # checking if filename exists
+  then
+   echo ""
+   echo "ERROR: Filename given \"$2\" doesn't exist"
+   echo ""
+   exit 1
+  else
+  case $1 in
+      -h|--help)
+      usage
+      ;;
+      reformatDNA)
+      python3 reformatDNA $2
+       ;;
+      reformatAA)
+      python3 reformatAA $2
+       ;;
+      statisticDNA)
+      python3 statistic_DNA $2
+      ;;
+      statisticAA)
+      python3 statistic_AA $2
+      ;;
+      reverse_complement)
+      python3 reverse_complement $2
+      ;;
+      translate)
+      python3 translate $2
+      ;;
+      *) # unknown command ERROR
+      echo ""
+      echo "ERROR: Unknown command \"$1\"! Check the list of possible commands.."
+      echo ""
+      usage
+      exit 1
+      ;;
+  esac
+ fi
+fi
+
+if [ "$#" -eq 1 ] # checking the number of arguments
+then
+  case $1 in
+      -h|--help)
+      usage
+      ;;
+      reformatDNA)
+      python3 reformatDNA
+       ;;
+      reformatAA)
+      python3 reformatAA
+       ;;
+      statisticDNA)
+      python3 statistic_DNA
+      ;;
+      statisticAA)
+      python3 statistic_AA
+      ;;
+      reverse_complement)
+      python3 reverse_complement
+      ;;
+      translate)
+      python3 translate
+      ;;
+      *) # unknown command ERROR
+      echo ""
+      echo "ERROR: Unknown command \"$1\"! Check the list of possible commands.."
+      echo ""
+      usage
+      exit 1
+      ;;
+  esac
+fi
+
+
+if [ "$#" -eq 4 ] # checking the number of arguments
+then
+  if [ ! -f $4 ] # checking if filename exists
+  then
+   echo ""
+   echo "ERROR: Filename given \"$4\" doesn't exist"
+   echo ""
+   exit 1
+  else
+  case $1 in
+  get_region)
+   python3 get_region $2 $3 $4
+   ;;
+   *) # unknown command ERROR
+   echo ""
+   echo "ERROR: Unknown command \"$1\"! Check the list of possible commands.."
+   echo ""
+   usage
+   exit 1
+   ;;
+  esac
+ fi
+fi
+
+if [ "$#" -eq 3 ] # checking the number of arguments
+then
+  case $1 in
+  get_region)
+  python3 get_region $2 $3
+  ;;
+  *) # unknown command ERROR
+  echo ""
+  echo "ERROR: Unknown command \"$1\"! Check the list of possible commands.."
+  echo ""
+  usage
+  exit 1
+  ;;
+  esac
+fi
+
+if [ "$#" -gt 4 ] # checking the number of arguments
+then
+  echo ""
+  echo "ERROR: Too many arguments in the input"
+  echo ""
+  usage
+  exit 1
+fi

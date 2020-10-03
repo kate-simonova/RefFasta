@@ -1,0 +1,157 @@
+#!/usr/bin/python3
+
+# this script is used to get statistics about protein sequence
+
+# importing necessary modules
+import sys
+from string import printable
+
+# variables used in script
+seq_list = []
+AA_codes = ['C', 'D', 'Q', 'I', 'A', 'Y', 'W', 'H', 'L', 'R', 'V', 'E', 'F', 'G', 'M', 'N', 'P', 'S', 'K', 'T', 'P',
+            'S', 'K', 'T', 'c', 'd', 'q', 'i', 'a', 'y', 'w', 'h', 'l', 'r', 'v', 'e', 'f', 'g', 'm', 'n', 'p', 's',
+            'k', 't', 'p', 's', 'k', 't', '*']
+sequence, output_file_name = [], ''
+
+
+# functions used in script
+def reformatseq(seq_line):
+    seq_line = ''.join(i.upper() for x in seq_line.split() for i in x if i in AA_codes)
+    seq_list.append(''.join(seq_line))
+    return seq_list
+
+
+def return_only_printable_symbols(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    seq_list = [text[i:i + 60] for i in range(0, len(text), 60)]
+    return seq_list
+
+
+def calculate_seq_length(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    return len(text)
+
+
+def calculate_acidic_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    aaa = text.count('b') + text.count('d') + text.count('e') + text.count('n') + text.count('q') + text.count('z')
+    return aaa
+
+
+def calculate_basic_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('k') + text.count('r') + text.count('h')
+
+
+def calculate_aromatic_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('f') + text.count('w') + text.count('y')
+
+
+def calculate_aliphatic_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('g') + text.count('a') + text.count('v') + text.count('l') + text.count('i')
+
+
+def calculate_sulphuric_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('c') + text.count('m')
+
+
+def calculate_aliphatic_hydroxyl_aa(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('s') + text.count('t')
+
+
+def calculate_mol_weight(seq_list):
+    # https://www.cusabio.com/m-299.html bases molecular weight source
+    mol_weight = {'a': 71.08, 'c': 103.14, 'd': 115.09, 'e': 129.12, 'f': 147.18, 'g': 57.06, 'h': 137.15, 'i': 113.17,
+                  'k': 128.18, 'l': 113.17, 'm': 131.21, 'n': 114.11, 'p': 97.12, 'q': 128.41, 'r': 156.20, 's': 87.08,
+                  't': 101.11, 'v': 99.14, 'w': 186.21, 'y': 163.18}
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    a_count, c_count, d_count, e_count = text.count('a'), text.count('c'), text.count('d'), text.count('e')
+    f_count, g_count, h_count, i_count = text.count('f'), text.count('e'), text.count('h'), text.count('i')
+    k_count, l_count, m_count, n_count = text.count('k'), text.count('l'), text.count('m'), text.count('n')
+    p_count, q_count, r_count, s_count = text.count('p'), text.count('q'), text.count('r'), text.count('s')
+    t_count, v_count, w_count, y_count = text.count('t'), text.count('v'), text.count('w'), text.count('y')
+    mol_weight = a_count * mol_weight['a'] + c_count * mol_weight['c'] + d_count * mol_weight['d'] + e_count * \
+                 mol_weight['e'] + f_count * mol_weight['f'] + g_count * mol_weight['g'] + h_count * mol_weight[
+                     'h'] + e_count * mol_weight['e'] + k_count * mol_weight['k'] + l_count * mol_weight[
+                     'l'] + m_count * mol_weight['m'] + n_count * mol_weight['n'] + p_count * mol_weight[
+                     'p'] + q_count * mol_weight['q'] + r_count * mol_weight['r'] + s_count * mol_weight[
+                     's'] + t_count * mol_weight['t'] + v_count * mol_weight['v'] + w_count * mol_weight[
+                     'w'] + y_count * mol_weight['y']
+    return round(mol_weight, 2)
+
+
+def calculate_extinction_coefficient(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    w_count, y_count, c_count = text.count('w'), text.count('y'), text.count('c')
+    coef = 5500 * w_count + 1490 * y_count + 125 * c_count
+    return round(coef)
+
+def count_stop_codon(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('*')
+
+
+# the main code
+try:
+    with open(sys.argv[1], 'r') as file:  # this line is used for a script as python3 myscript.py file.txt
+        for line in file:
+            if line.startswith('>'):  # it is a header
+                output_file_name = line.strip()
+            else:
+                sequence = reformatseq(line)
+        seq_length = calculate_seq_length(sequence)
+        sequence = return_only_printable_symbols(sequence)
+        acidic = calculate_acidic_aa(sequence)
+        basic = calculate_basic_aa(sequence)
+        aromatic = calculate_aromatic_aa(sequence)
+        sulphuric = calculate_sulphuric_aa(sequence)
+        hydroxylic = calculate_aliphatic_hydroxyl_aa(sequence)
+        aliphatic = calculate_aliphatic_aa(sequence)
+        mol_weight = calculate_mol_weight(sequence)
+        ext_coef = calculate_extinction_coefficient(sequence)
+        stop_codon = count_stop_codon(sequence)
+        if output_file_name == '':
+            output_file_name = ''.join(sys.argv[1].strip().split('.')[:-1])  # we take the header from file name
+except IndexError:
+    for line in sys.stdin:  # this line is used for running script as an input from cat function
+        if line.startswith('>'):  # it is a header
+            output_file_name = line.strip()
+        else:
+            sequence = reformatseq(line)
+    seq_length = calculate_seq_length(sequence)
+    sequence = return_only_printable_symbols(sequence)
+    acidic = calculate_acidic_aa(sequence)
+    basic = calculate_basic_aa(sequence)
+    aromatic = calculate_aromatic_aa(sequence)
+    sulphuric = calculate_sulphuric_aa(sequence)
+    hydroxylic = calculate_aliphatic_hydroxyl_aa(sequence)
+    aliphatic = calculate_aliphatic_aa(sequence)
+    seq_length = calculate_seq_length(sequence)
+    mol_weight = calculate_mol_weight(sequence)
+    ext_coef = calculate_extinction_coefficient(sequence)
+    stop_codon = count_stop_codon(sequence)
+    if output_file_name == '':
+        output_file_name = 'your fasta sequence'  # we will take this as a header
+
+# writing to a file
+with open('{}_statistic_AA.txt'.format(output_file_name.strip('>').replace(' ', '_')), 'w') as f:
+    print()
+    print('*** Basic statistics on your protein sequence ***', file=f)
+    print('The sequence length: ' + str(seq_length), file=f)
+    print('The predicted molecular weight: ' + str(mol_weight) + ' g/mol', file=f)
+    print('The predicted extinction coefficient: ' + str(ext_coef) + ' M^(-1)*cm^(-1)', file=f)
+    print('The number of basic amino acids: ' + str(basic), file=f)
+    print('The number of acidic amino acids: ' + str(acidic), file=f)
+    print('The number of aromatic amino acids: ' + str(aromatic), file=f)
+    print('The number of aliphatic amino acids: ' + str(aliphatic), file=f)
+    print('The number of sulphuric amino acids: ' + str(sulphuric), file=f)
+    print('The number of hydroxylic amino acids: ' + str(hydroxylic), file=f)
+    print('The number of stop codons: ' + str(stop_codon), file=f) if stop_codon < 1 else print('Your sequence has more than one stop codon! {} stop codons found! Check it!\n'.format(stop_codon))
+
+# printing sequence
+with open('{}_statistic_AA.txt'.format(output_file_name.strip('>').replace(' ', '_')), 'r') as seq_file:
+    print(seq_file.read())

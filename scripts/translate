@@ -1,0 +1,105 @@
+#!/usr/bin/python3
+
+# this script is used to translate DNA sequence to protein sequence
+
+# importing necessary modules
+import sys
+from string import printable
+
+# variables used in script
+seq_list = []
+IUB_nucleotide_code = ['A', 'T', 'C', 'G', 'R', 'Y', 'K', 'M', 'S', 'W', 'B', 'D', 'H', 'V', 'N',
+                       'a', 't', 'c', 'g', 'r', 'y', 'k', 'm', 's', 'w', 'b', 'd', 'h', 'v', 'n']
+output_file_name = ''
+triplets = {
+    "I": ('ATT', 'ATC', 'ATA'),
+    "L": ('CTT', 'CTC', 'CTA', 'CTG', 'TTA', 'TTG'),
+    "V": ('GTT', 'GTC', 'GTA', 'GTG'),
+    "F": ('TTT', 'TTC'),
+    "M": ('ATG',),
+    "C": ('TGT', 'TGC'),
+    "A": ('GCT', 'GCC', 'GCA', 'GCG'),
+    "G": ('GGT', 'GGC', 'GGA', 'GGG'),
+    "P": ('CCT', 'CCC', 'CCA', 'CCG'),
+    "T": ('ACT', 'ACC', 'ACA', 'ACG'),
+    "S": ('TCT', 'TCC', 'TCA', 'TCG', 'AGT', 'AGC'),
+    "Y": ('TAT', 'TAC'),
+    "W": ('TGG',),
+    "Q": ('CAA', 'CAG'),
+    "N": ('AAT', 'AAC'),
+    "H": ('CAT', 'CAC'),
+    "E": ('GAA', 'GAG'),
+    "D": ('GAT', 'GAC'),
+    "K": ('AAA', 'AAG'),
+    "R": ('CGT', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG'),
+    "*": ('TAA', 'TAG', 'TGA'),
+}
+
+
+# functions used in script
+def split_to_codon_list(input_text):
+    codon_list = []
+    for i in range(0, len(input_text), 3):
+        xs = input_text[i:i + 3]
+        if len(xs) == 3:
+            codon_list.append(xs)
+    return codon_list
+
+
+def translation(list, dict):
+    AA_list = []
+    for codon in list:
+        for key, value in dict.items():
+            for i in value:
+                if codon == i:
+                    AA_list.append(key)
+                    break
+    return AA_list
+
+
+def reformatseq(seq_line):
+    seq_line = ''.join(i.upper() for x in seq_line.split() for i in x if i in IUB_nucleotide_code)
+    seq_list.append(''.join(seq_line))
+    return seq_list
+
+
+def return_printable_symbols_translate(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    codons = split_to_codon_list(text)
+    amino_acids = translation(codons, triplets)
+    joined_aa_list = ''.join(amino_acids)
+    seq_list = [joined_aa_list[i:i + 60] for i in
+                range(0, len(joined_aa_list), 60)]  # cut into pieces 60 symbols per line
+    return seq_list
+
+
+# the main code
+try:
+    with open(sys.argv[1], 'r') as file:  # this line is used for a script as python3 myscript.py file.txt
+        for line in file:
+            if line.startswith('>'):  # it is a header
+                output_file_name = line.strip().strip('>').replace(' ', '_')
+            else:
+                sequence = reformatseq(line)
+        sequence = return_printable_symbols_translate(sequence)
+        if output_file_name == '':
+            output_file_name = ''.join(sys.argv[1].split('.')[:-1])  # we take the header from file name
+except IndexError:
+    for line in sys.stdin:  # this line is used for running script as an input from cat function
+        if line.startswith('>'):  # it is a header
+            output_file_name = line.strip()
+        else:
+            sequence = reformatseq(line)
+    sequence = return_printable_symbols_translate(sequence)
+    if output_file_name == '':
+        output_file_name = 'your fasta sequence'  # we will take this as a header
+
+# writing to a file
+with open('{}_aa.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'w') as f:
+    print('>' + output_file_name + '_aa', file=f)
+    for i in sequence:
+        print(i, file=f)
+
+# printing sequence to the terminal
+with open('{}_aa.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'r') as seq_file:
+    print(seq_file.read())

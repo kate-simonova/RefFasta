@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+
+# this script is used to transform amino acid sequence into fasta format
+
+# importing necessary modules
+import sys
+from string import printable
+
+# variables used in script
+seq_list = []
+output_file_name = ''
+AA_codes = ['C', 'D', 'Q', 'I', 'A', 'Y', 'W', 'H', 'L', 'R', 'V', 'E', 'F', 'G', 'M', 'N', 'P', 'S', 'K', 'T', 'P',
+            'S', 'K', 'T', 'c', 'd', 'q', 'i', 'a', 'y', 'w', 'h', 'l', 'r', 'v', 'e', 'f', 'g', 'm', 'n', 'p', 's',
+            'k', 't', 'p', 's', 'k', 't', '*']
+
+
+# functions used in script
+def reformatseq(seq_line):
+    seq_line = ''.join(i.upper() for x in seq_line.split() for i in x if i in AA_codes)
+    seq_list.append(''.join(seq_line))
+    return seq_list
+
+
+def return_only_printable_symbols(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    seq_list = [text[i:i + 60] for i in range(0, len(text), 60)]
+    return seq_list
+
+
+# the main code
+try:
+    with open(sys.argv[1], 'r') as file:  # this line is used for a script as python3 myscript.py file.txt
+        for line in file:
+            if line.startswith('>'):  # it means it has a header
+                output_file_name = line.strip()
+            sequence = reformatseq(line)
+        sequence = return_only_printable_symbols(sequence)
+        if output_file_name == '':
+            output_file_name = ''.join(sys.argv[1].split('.')[:-1])  # we take the header from file name
+except IndexError:
+    for line in sys.stdin:  # this line is used for running script as an input from cat function
+        if line.startswith('>'):  # it is a header
+            output_file_name = line.strip()
+        sequence = reformatseq(line)
+    sequence = return_only_printable_symbols(sequence)
+    if output_file_name == '':
+        output_file_name = 'your fasta sequence'
+
+# writing to a file
+with open('{}.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'w') as f:
+    print('>' + output_file_name, file=f)
+    for i in sequence:
+        print(i, file=f)
+
+# printing sequence
+with open('{}.fa'.format(output_file_name.strip('>').replace(' ', '_')), 'r') as seq_file:
+    print(seq_file.read())

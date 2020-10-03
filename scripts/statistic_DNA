@@ -1,0 +1,123 @@
+#!/usr/bin/python3
+
+# importing necessary modules
+import sys
+from string import printable
+
+# variables used in script
+seq_list = []
+IUB_nucleotide_code = ['A', 'T', 'C', 'G', 'R', 'Y', 'K', 'M', 'S', 'W', 'B', 'D', 'H', 'V', 'N',
+                       'a', 't', 'c', 'g', 'r', 'y', 'k', 'm', 's', 'w', 'b', 'd', 'h', 'v', 'n']
+
+
+# functions used in script
+def reformatseq(seq_line):
+    seq_line = ''.join(i.upper() for x in seq_line.split() for i in x if i in IUB_nucleotide_code)
+    seq_list.append(''.join(seq_line))
+    return seq_list
+
+def return_only_printable_symbols(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    seq_list = [text[i:i + 60] for i in range(0, len(text), 60)]
+    return seq_list
+
+def calculate_GC_content(seq_list):
+    sequence = ''.join(char for char in ''.join(seq_list) if char in printable)
+    G_count, C_count = int(sequence.count('G')),  int(sequence.count('C'))
+    Percentage_GC = ((G_count + C_count) / len(sequence))*100
+    return round(Percentage_GC,2)
+
+def calculate_seq_length(seq_list):
+    text = ''.join(char for char in ''.join(seq_list) if char in printable)
+    return len(text)
+
+def calculate_n_number(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return text.count('n')
+
+# not required here applicable for oligonucleotides
+def calculate_melt_temp(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    return 2*(text.count('a') + text.count('t')) + 4*(text.count('c') + text.count('g')) - 7
+
+def predicted_mol_weight(seq_list):
+    # https://www.cusabio.com/m-299.html bases molecular weight source
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    a_count, c_count, g_count, t_count = text.count('a'), text.count('c'), text.count('t'), text.count('g')
+    mol_weight = a_count*313.2 + t_count*304.2 + c_count*289.2 + g_count*329.2 + 79
+    return mol_weight
+
+def get_acgt_content(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    a_count, c_count, g_count, t_count = text.count('a'), text.count('c'), text.count('t'), text.count('g')
+    return (a_count, c_count, g_count, t_count)
+
+def get_iub_content(seq_list):
+    text = ''.join(char.lower() for char in ''.join(seq_list) if char in printable)
+    r_count, y_count, k_count, s_count = text.count('r'), text.count('y'), text.count('k'), text.count('s')
+    m_count, w_count, b_count, d_count = text.count('m'), text.count('w'), text.count('b'), text.count('d')
+    h_count, v_count = text.count('h'), text.count('v')
+    return (r_count, y_count, k_count, s_count, m_count, w_count, b_count, d_count, h_count, v_count)
+
+
+output_file_name = ''
+# the main code
+try:
+    with open(sys.argv[1], 'r') as file: # this line is used for a script as python3 myscript.py file.txt
+        for line in file:
+            if line.startswith('>'): # it's a header
+                output_file_name = line.strip()
+            else:
+                sequence = reformatseq(line)
+                seq_length = calculate_seq_length(sequence)
+                n_count = calculate_n_number(sequence)
+                gc_content = calculate_GC_content(sequence)
+                mol_weight = predicted_mol_weight(sequence)
+                count_a, count_c, count_g, count_t = get_acgt_content(sequence)
+                count_r, count_y, count_k, count_s, count_m, count_w, count_b, count_d, count_h, count_v = get_iub_content(sequence)
+        sequence = return_only_printable_symbols(sequence)
+        if output_file_name == '':
+            output_file_name = ''.join(sys.argv[1].split('.')[:-1]) # we take the header from file name
+except IndexError:
+    for line in sys.stdin: # this line is used for running script as an input from cat function
+        if line.startswith('>'): # it's a header
+            output_file_name = line.strip()
+        else:
+            sequence = reformatseq(line)
+            seq_length = calculate_seq_length(sequence)
+            n_count = calculate_n_number(sequence)
+            gc_content = calculate_GC_content(sequence)
+            seq_length = calculate_seq_length(sequence)
+            mol_weight = predicted_mol_weight(sequence)
+            count_a, count_c, count_g, count_t = get_acgt_content(sequence)
+            count_r, count_y, count_k, count_s, count_m, count_w, count_b, count_d, count_h, count_v = get_iub_content(sequence)
+    sequence = return_only_printable_symbols(sequence)
+    if output_file_name == '':
+        output_file_name = 'your_fasta_sequence' # we will take this as a header
+
+# writing to a file
+with open('{}_stats.txt'.format(output_file_name.strip('>').replace(' ', '_')), 'w') as f:
+    print()
+    print('*** Basic statistics on your DNA sequence ***', file=f)
+    print('GC content: ' + str(gc_content) + ' %', file=f)
+    print('The sequence length: ' + str(seq_length) + ' bp', file=f)
+    print('The A content : ' + str(count_a), file=f)
+    print('The C content : ' + str(count_c), file=f)
+    print('The G content : ' + str(count_g), file=f)
+    print('The T content : ' + str(count_t), file=f)
+    print('The R content : ' + str(count_r), file=f) if count_r > 0 else print(end='')
+    print('The Y content : ' + str(count_y), file=f) if count_y > 0 else print(end='')
+    print('The K content : ' + str(count_k), file=f) if count_k > 0 else print(end='')
+    print('The S content : ' + str(count_s), file=f) if count_s > 0 else print(end='')
+    print('The M content : ' + str(count_m), file=f) if count_m > 0 else print(end='')
+    print('The W content : ' + str(count_w), file=f) if count_w > 0 else print(end='')
+    print('The B content : ' + str(count_b), file=f) if count_b > 0 else print(end='')
+    print('The D content : ' + str(count_d), file=f) if count_d > 0 else print(end='')
+    print('The H content : ' + str(count_h), file=f) if count_h > 0 else print(end='')
+    print('The V content : ' + str(count_v), file=f) if count_v > 0 else print(end='')
+    print('Unknown (N) sequence count: ' + str(n_count), file=f) if n_count > 0 else print(end='')
+    print('Predicted molecular weight: ' + str(mol_weight) + ' g/mol', file=f)
+
+# printing sequence to the terminal
+with open('{}_stats.txt'.format(output_file_name.strip('>').replace(' ', '_')), 'r') as seq_file:
+    print(seq_file.read())
