@@ -8,6 +8,7 @@ Use the following commands in order to download all scripts and run scripts from
 
 ```bash
 git clone https://github.com/kate-simonova/refFasta.git
+cd refFasta
 mv scripts/* -t /usr/local/bin
 ```
 
